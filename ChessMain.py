@@ -188,6 +188,7 @@ def drawGameState(screen, gs, validMoves, sqSelected):
     drawBoard(screen)
     highlightMove(screen, gs, validMoves, sqSelected)
     drawPieces(screen, gs.board)
+    drawEval(screen, gs)
     drawMoveLog(screen, gs)
 
 def drawBoard(screen):
@@ -212,8 +213,18 @@ def drawEndGameText(screen, text):
     textObject = font.render(text, False, p.Color("red"))
     screen.blit(textObject, textLocation.move(2, 2))
 
+def drawEval(screen, gs):
+    moveLogRect = p.Rect(WIDTH, 0, MOVE_LOG_PANEL_WIDTH, 20)
+    p.draw.rect(screen, p.Color("black"), moveLogRect)
+
+    font = p.font.SysFont("Verdana", 13, True, False)
+
+    textObject = font.render(str(gs.evaluate()), False, p.Color("white"))
+    textLocation = moveLogRect.move(5, 5)
+    screen.blit(textObject, textLocation)
+
 def drawMoveLog(screen, gs):
-    moveLogRect = p.Rect(WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
+    moveLogRect = p.Rect(WIDTH, 20, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
     p.draw.rect(screen, p.Color("black"), moveLogRect)
     moveLog = gs.moveLog
     moveTexts = []

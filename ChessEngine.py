@@ -24,6 +24,21 @@ class GameState():
             "K": self.KingMoves,
             "Q": self.QueenMoves,
         }
+        self.pieceValue = {
+            "bp": -1,
+            "bR": -5,
+            "bN": -3,
+            "bB": -3,
+            "bQ": -9,
+            "bK": 0,
+            "wp": 1,
+            "wR": 5,
+            "wN": 3,
+            "wB": 3,
+            "wQ": 9,
+            "wK": 0,
+            "--": 0
+        }
         self.whiteTurn = True
         self.moveLog = []
         self.whiteKingLocation = (7, 4)
@@ -553,6 +568,15 @@ class GameState():
 
             if not inCheck1 and not inCheck2 and not inCheck3:
                 moves.append(Move((row, col), (row, col - 2), self.board, isCastleMove=True))
+    
+    def evaluate(self):
+        # piece evaluation
+        score = 0
+        for row in self.board:
+            for piece in row:
+                score += self.pieceValue[piece]
+
+        return score
 
 class Move():
     # row start from 1->8 (bottom left to top left)
