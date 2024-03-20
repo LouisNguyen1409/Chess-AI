@@ -2,6 +2,7 @@
 import math
 import pygame as p
 import ChessEngine
+import ChessAI as ai
 
 # CONSTANT
 WIDTH = HEIGHT = 512
@@ -70,7 +71,7 @@ def main():
                         #     # make move if valid
                         if move in validMoves:
                             move = validMoves[validMoves.index(move)]
-                            gs.makeMove(move)
+                            gs.makeMove(move, humanTurn)
                             moveMade = True
                             animate = True
                             sqSelected = ()
@@ -102,6 +103,18 @@ def main():
                 elif e.key == p.K_e: # switch player when pressed e
                     playerOne = True
                     playerTwo = False
+                elif e.key == p.K_f:
+                    playerTwo = False
+
+        ''' AI move finder '''
+        if not humanTurn:
+            white = -1
+            depth = 2
+            move = ai.minimax(gs, 2 * depth, white)
+            if not (move == None):                   
+                moveMade = True
+                animate = True
+                gs.makeMove(move, not humanTurn)
 
         if moveMade:
             if animate:
@@ -109,9 +122,6 @@ def main():
             validMoves = gs.getValidMoves()
             moveMade = False
             animate = False
-
-        ''' AI move finder '''
-        # TODO: add AI move finder
 
 
         drawGameState(screen, gs, validMoves, sqSelected)

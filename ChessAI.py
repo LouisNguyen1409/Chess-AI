@@ -1,16 +1,47 @@
 import math
 import ChessEngine
+import copy
 
-def minimax( gs, depth ):
-    return alphabeta( gs, depth, -math.inf, math.inf )
+def getMoves(gs):
+    moves = gs.getValidMoves()
+    underpromotions = []
+    for move in moves:
+        if move.isPawnPromotion:
+            # Append underpromotion to list
+            for piece in ['R', 'B', 'N']:
+                newMove = copy.deepcopy(move)
+                newMove.promotedPiece = piece
+                underpromotions.append(newMove)
+                
+            move.promotedPiece = 'Q'
 
-def alphabeta( gs, depth, a, b ):
+    moves.extend(underpromotions)
+    return moves
+
+def minimax( gs, depth, white ):
+    a = -math.inf
+    b = math.inf
     if gs.checkMate or gs.staleMate or depth == 0:
-        return gs.evaluate()
+        return None
 
-    for move in gs.getValidMoves():
-        gs.makeMove(move)
-        a = max( a, -alphabeta(gs, depth-1, -b, -a ))
+    bestMove = None
+    for move in getMoves(gs):
+        gs.makeMove(move, False)
+        new_a = -alphabeta(gs, depth-1, white, -b, -a )
+        if (new_a > a):
+            bestMove = move
+            a = new_a
+        gs.undoMove()
+
+    return bestMove
+
+def alphabeta( gs, depth, white, a, b ):
+    if gs.checkMate or gs.staleMate or depth == 0:
+        return white * gs.evaluate()
+
+    for move in getMoves(gs):
+        gs.makeMove(move, False)
+        a= max( a, -alphabeta(gs, depth-1, white, -b, -a ))
         gs.undoMove()
         if a >= b:
             return a

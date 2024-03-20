@@ -53,7 +53,7 @@ class GameState():
         self.currentCastleRight = castleRight(True, True, True, True)
         self.castleRightLog = [castleRight(self.currentCastleRight.wK, self.currentCastleRight.wQ, self.currentCastleRight.bK, self.currentCastleRight.bQ)]
 
-    def makeMove(self, move):
+    def makeMove(self, move, humanTurn):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move) # store history of move
@@ -67,9 +67,12 @@ class GameState():
 
         # promotion
         if move.isPawnPromotion:
-            promotedPiece = input("Enter the piece you want to promote to (Q, R, B, N): ")
-            promotedPiece = promotedPiece.upper()
-            self.board[move.endRow][move.endCol] = move.pieceMoved[0] + promotedPiece
+            if humanTurn:
+                promotedPiece = input("Enter the piece you want to promote to (Q, R, B, N): ")
+                promotedPiece = promotedPiece.upper()
+                self.board[move.endRow][move.endCol] = move.pieceMoved[0] + promotedPiece
+            else:
+                self.board[move.endRow][move.endCol] = move.pieceMoved[0] + move.promotedPiece
 
         # Enpassant Move
         if move.isEnpassantMove:
@@ -587,7 +590,7 @@ class Move():
     alphaToCol = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
     colToAlpha = {v: k for k, v in alphaToCol.items()}
 
-    def __init__(self, startSq, endSq, board, isEnpassantMove=False, isCastleMove=False):
+    def __init__(self, startSq, endSq, board, isEnpassantMove=False, isCastleMove=False, promotedPiece = ''):
         self.startRow = startSq[0]
         self.startCol = startSq[1]
         self.endRow = endSq[0]
@@ -599,6 +602,7 @@ class Move():
         if self.isEnpassantMove:
             self.pieceCaptured = "wp" if self.pieceMoved == "bp" else "bp"
         self.isCastleMove = isCastleMove
+        self.promotedPiece = promotedPiece
         self.isCapture = (self.pieceCaptured != "--")
         self.moveId = self.startCol * 1000 + self.startRow * 100 + self.endCol * 10 + self.endRow
 
