@@ -541,17 +541,17 @@ class GameState():
             else:
                 self.blackKingLocation = (row, col - 2)
             inCheck2, pins, checks = self.checkForPinsAndChecks()
-            if allyColor == 'w':
-                self.whiteKingLocation = (row, col - 3)
-            else:
-                self.blackKingLocation = (row, col - 3)
-            inCheck3, pins, checks = self.checkForPinsAndChecks()
+            # if allyColor == 'w':
+            #     self.whiteKingLocation = (row, col - 3)
+            # else:
+            #     self.blackKingLocation = (row, col - 3)
+            # inCheck3, pins, checks = self.checkForPinsAndChecks()
             if allyColor == 'w':
                 self.whiteKingLocation = (row, col)
             else:
                 self.blackKingLocation = (row, col)
 
-            if not inCheck1 and not inCheck2 and not inCheck3:
+            if not inCheck1 and not inCheck2:
                 moves.append(Move((row, col), (row, col - 2), self.board, isCastleMove=True))
 
 class Move():
