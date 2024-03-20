@@ -104,11 +104,17 @@ def main():
                     playerOne = True
                     playerTwo = False
                 elif e.key == p.K_f:
-                    playerTwo = False
+                    if gs.whiteTurn:
+                        playerOne = False
+                    else:
+                        playerTwo = False
 
         ''' AI move finder '''
         if not humanTurn:
-            white = -1
+            white = 1
+            if (not gs.whiteTurn):
+                white = -1
+                
             depth = 2
             move = ai.minimax(gs, 2 * depth, white)
             if not (move == None):                   
