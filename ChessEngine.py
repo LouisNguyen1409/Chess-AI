@@ -612,11 +612,21 @@ class GameState():
                         if self.board[row+1][col+1] == "wp":
                             score -= 0.05  
                 else:
-                    if piece[1] != 'K':
+                    if piece[1] != 'K' or piece[1] != 'R':
                         if piece[0] == "w" and row < 6:
-                            development += 0.1
+                            development += 0.15
                         elif piece[0] == "b" and row > 1:
-                            development -= 0.1
+                            development -= 0.15
+                    elif piece[1] == "R":
+                        if piece[0] == "w" and col in range(3,7):
+                            development += 0.15
+                        elif piece[0] == "b" and col in range(3,7):
+                            development -= 0.15
+                    elif piece[1] == "K":
+                        if piece[0] == "w" and col in (0,1,2,6,7):
+                            development += 0.2
+                        elif piece[0] == "b" and col in (0,1,2,6,7):
+                            development -= 0.2
 
         # Check doubled pawns
         for stacked_pawns in w_pawns:
@@ -632,7 +642,7 @@ class GameState():
                 score -= 0.3
 
         # Add developement and space
-        score += (development + 0.1 * space)
+        score += (development + 0.05 * space)
         return score
 
 class Move():

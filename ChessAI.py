@@ -36,10 +36,13 @@ def minimax( gs, depth, white ):
     return bestMove
 
 def alphabeta( gs, depth, white, a, b, side):
-    if gs.checkMate: 
-        return white * side * (10000 + 100 * depth)
-    if gs.staleMate:
-        return 0
+    # Set checkmate/stalemate flags
+    terminal, winner = isCheckmate(gs)
+    if terminal: 
+        if winner == 1:
+            return white * side * (10000 + 100 * depth)
+        else:
+            return 0
     if depth == 0:
         return white * side * gs.evaluate()
 
@@ -78,3 +81,46 @@ def move_ordering(moves, gs):
         ordered.append(move)
 
     return ordered
+
+def isCheckmate(self):
+    moves = []
+    self.inCheck, self.pins, self.checks = self.checkForPinsAndChecks()
+    if self.whiteTurn:
+        kingRow = self.whiteKingLocation[0]
+        kingCol = self.whiteKingLocation[1]
+    else:
+        kingRow = self.blackKingLocation[0]
+        kingCol = self.blackKingLocation[1]
+
+    if self.inCheck:
+        if len(self.checks) == 1:
+            moves = self.getAllPossibleMoves()
+            check = self.checks[0]
+            checkRow = check[0]
+            checkCol = check[1]
+            pieceChecking = self.board[checkRow][checkCol]
+            validSqs = []
+            if pieceChecking[1] == 'N':
+                validSqs = [(checkRow, checkCol)]
+            else:
+                for i in range(1, 8):
+                    validSq = (kingRow + check[2] * i, kingCol + check[3] * i)
+                    validSqs.append(validSq)
+                    if validSq[0] == checkRow and validSq[1] == checkCol:
+                        break
+            for i in range(len(moves) - 1, -1, -1):
+                if moves[i].pieceMoved[1] != 'K':
+                    if not (moves[i].endRow, moves[i].endCol) in validSqs:
+                        moves.remove(moves[i])
+        else:
+            self.KingMoves(kingRow, kingCol, moves)
+    else:
+        moves = self.getAllPossibleMoves()
+
+    if len(moves) == 0:
+        if self.inCheck:
+            return True, 1
+        else:
+            return True, 0
+
+    return False, 0
