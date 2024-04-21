@@ -573,12 +573,66 @@ class GameState():
                 moves.append(Move((row, col), (row, col - 2), self.board, isCastleMove=True))
     
     def evaluate(self):
-        # piece evaluation
         score = 0
-        for row in self.board:
-            for piece in row:
+        b_pawns = [0,0,0,0,0,0,0,0]
+        w_pawns = [0,0,0,0,0,0,0,0]  
+        development = 0
+        space = 0
+        for row, row_list in enumerate(self.board):  
+            for col, piece in enumerate(row_list):
+                # piece evaluation
                 score += self.pieceValue[piece]
 
+                
+                if piece == "wp":
+                    space += (7-row)
+                    w_pawns[col] += 1
+                    # centre
+                    if row in range(2,6) and col in range(3,5):
+                        score += 0.2
+                    # pawn structure    
+                    if row < 7 and col > 0:                   
+                        if self.board[row-1][col-1] == "wp":
+                            score += 0.05
+                    elif row < 7 and col < 7:                   
+                        if self.board[row-1][col+1] == "wp":
+                            score += 0.05
+                            
+                elif piece == "bp":
+                    space -= row
+                    b_pawns[col] += 1
+                    # centre
+                    if row in range(2,6) and col in range(3,5):
+                        score -= 0.2
+                    # pawn structure    
+                    if row > 0 and col > 0:                   
+                        if self.board[row+1][col-1] == "wp":
+                            score -= 0.05
+                    elif row > 0 and col < 7:                   
+                        if self.board[row+1][col+1] == "wp":
+                            score -= 0.05  
+                else:
+                    if piece[1] != 'K':
+                        if piece[0] == "w" and row < 6:
+                            development += 0.1
+                        elif piece[0] == "b" and row > 1:
+                            development -= 0.1
+
+        # Check doubled pawns
+        for stacked_pawns in w_pawns:
+            score -= max(0, stacked_pawns - 1) * 0.5
+        for stacked_pawns in b_pawns:
+            score += max(0, stacked_pawns - 1) * 0.5
+
+        # Check passed pawns:
+        for i in range(8):
+            if w_pawns[i] > 0 and b_pawns[max(i-1, 0)] == 0 and b_pawns[max(i, 0)] == 0 and b_pawns[min(i+1, 7)] == 0:
+                score += 0.3
+            if b_pawns[i] > 0 and w_pawns[max(i-1, 0)] == 0 and w_pawns[max(i, 0)] == 0 and w_pawns[min(i+1, 7)] == 0:
+                score -= 0.3
+
+        # Add developement and space
+        score += (development + 0.1 * space)
         return score
 
 class Move():

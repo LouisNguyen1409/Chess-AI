@@ -64,7 +64,7 @@ def main():
                         playerClicks.append(sqSelected)
 
                     # make move when have 2 diff square
-                    print(playerClicks)
+                    #print(playerClicks)
                     if len(playerClicks) == 2:
                         move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
                         # for i in range(len(validMoves)):
@@ -76,7 +76,7 @@ def main():
                             animate = True
                             sqSelected = ()
                             playerClicks = []
-                            print(move.getChessNotation())
+                            #print(move.getChessNotation())
                         else:
                             playerClicks = [sqSelected]
             elif e.type == p.KEYDOWN:
@@ -110,7 +110,7 @@ def main():
                         playerTwo = False
 
         ''' AI move finder '''
-        if not humanTurn:
+        if not humanTurn and not gameOver:
             white = 1
             if (not gs.whiteTurn):
                 white = -1
@@ -120,7 +120,7 @@ def main():
             if not (move == None):                   
                 moveMade = True
                 animate = True
-                gs.makeMove(move, not humanTurn)
+                gs.makeMove(move, False)
 
         if moveMade:
             if animate:
@@ -132,7 +132,8 @@ def main():
 
         drawGameState(screen, gs, validMoves, sqSelected)
 
-        if gs.checkMate or gs.staleMate:
+        
+        if (gs.checkMate or gs.staleMate):
             gameOver = True
             if gs.staleMate:
                 gameOver = True
@@ -142,6 +143,7 @@ def main():
                     drawEndGameText(screen, "BLACK WIN")
                 else:
                     drawEndGameText(screen, "WHITE WIN")
+        
 
 
         clock.tick(MAX_FPS)
