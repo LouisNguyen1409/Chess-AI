@@ -578,25 +578,33 @@ class GameState():
         w_pawns = [0,0,0,0,0,0,0,0]  
         development = 0
         space = 0
+        b_safety = 0
+        w_safety = 0
+        b_queen_alive = False
+        w_queen_alive = False
         for row, row_list in enumerate(self.board):  
             for col, piece in enumerate(row_list):
                 # piece evaluation
                 score += self.pieceValue[piece]
 
-                
+                # count queens alive:
+                if piece == "wQ":
+                    w_queen_alive = True
+                if piece == "bQ":
+                    b_queen_alive = True
+
                 if piece == "wp":
                     space += (7-row)
                     w_pawns[col] += 1
                     # centre
                     if row in range(2,6) and col in range(3,5):
                         score += 0.2
-                    # pawn structure    
-                    if row < 7 and col > 0:                   
-                        if self.board[row-1][col-1] == "wp":
-                            score += 0.05
-                    elif row < 7 and col < 7:                   
-                        if self.board[row-1][col+1] == "wp":
-                            score += 0.05
+                    # pawn structure                      
+                    if self.board[max(0, row-1)][max(0,col-1)] == "wp" or self.board[max(0,row-1)][min(7, col+1)] == "wp":
+                        score += 0.05
+
+                    
+
                             
                 elif piece == "bp":
                     space -= row
@@ -605,18 +613,22 @@ class GameState():
                     if row in range(2,6) and col in range(3,5):
                         score -= 0.2
                     # pawn structure    
-                    if row > 0 and col > 0:                   
-                        if self.board[row+1][col-1] == "wp":
-                            score -= 0.05
-                    elif row > 0 and col < 7:                   
-                        if self.board[row+1][col+1] == "wp":
-                            score -= 0.05  
+                    if self.board[min(7, row+1)][max(0,col-1)] == "wp" or self.board[min(7,row+1)][min(7,col+1)] == "wp":
+                        score -= 0.05
                 else:
+                    #development
                     if piece[1] != 'K' or piece[1] != 'R':
                         if piece[0] == "w" and row < 6:
                             development += 0.15
                         elif piece[0] == "b" and row > 1:
                             development -= 0.15
+
+                        # Prevent early queen moves
+                        if piece[0] == "Q" and len(self.moveLog) < 10:
+                            development -= 0.15
+                        elif piece[0] == "Q" and len(self.moveLog) < 10:
+                            development += 0.15
+
                     elif piece[1] == "R":
                         if piece[0] == "w" and col in range(3,7):
                             development += 0.15
@@ -624,9 +636,63 @@ class GameState():
                             development -= 0.15
                     elif piece[1] == "K":
                         if piece[0] == "w" and col in (0,1,2,6,7):
-                            development += 0.2
+                            w_safety += 0.4
+
+                            # King safety
+                            castling_side_list = [(0,1,2), (5,6,7)]
+                            # king_pawns[a,b], where a is one square away from king, b is two squares away 
+                            for castling_side in castling_side_list:
+                                king_pawns = [0,0]
+                                if col in castling_side:
+                                    for i in col:
+                                        if self.board[i][6] == "wp":
+                                            king_pawns[0] += 1
+                                        if self.board[i][5] == "wp":
+                                            king_pawns[1] += 1
+                                
+                                # evaluate safety
+                                if king_pawns[0] < 2:
+                                    if king_pawns[0] == 0:
+                                        w_safety -= 0.5
+                                    elif king_pawns[1] == 2:
+                                        w_safety -= 0.05
+                                    elif king_pawns[1] == 1:
+                                        w_safety -= 0.1
+                                    elif king_pawns[1] == 0:
+                                        w_safety -= 0.3                     
+
                         elif piece[0] == "b" and col in (0,1,2,6,7):
-                            development -= 0.2
+                            b_safety += 0.4
+
+                            # King safety
+                            castling_side_list = [(0,1,2), (5,6,7)]
+                            # king_pawns[a,b], where a is one square away from king, b is two squares away 
+                            for castling_side in castling_side_list:
+                                king_pawns = [0,0]
+                                if col in castling_side:
+                                    for i in col:
+                                        if self.board[i][1] == "wp":
+                                            king_pawns[0] += 1
+                                        if self.board[i][2] == "wp":
+                                            king_pawns[1] += 1
+                                
+                                # evaluate safety
+                                if king_pawns[0] < 2:
+                                    if king_pawns[0] == 0:
+                                        b_safety -= 0.5
+                                    elif king_pawns[1] == 2:
+                                        b_safety -= 0.05
+                                    elif king_pawns[1] == 1:
+                                        b_safety -= 0.1
+                                    elif king_pawns[1] == 0:
+                                        b_safety -= 0.3    
+                    
+                    # Knight on edge case
+                    if piece[1] == 'N':
+                        if piece[0] == "w" and col in (0,7):
+                            development -= 0.05
+                        elif piece[0] == "b" and col in (0,7):
+                            development += 0.05
 
         # Check doubled pawns
         for stacked_pawns in w_pawns:
@@ -643,6 +709,12 @@ class GameState():
 
         # Add developement and space
         score += (development + 0.05 * space)
+
+        # Add king safety
+        if b_queen_alive:
+            score += w_safety
+        if w_queen_alive:
+            score += b_safety
         return score
 
 class Move():
