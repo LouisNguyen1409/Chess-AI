@@ -114,7 +114,9 @@ def main():
             white = 1
             if (not gs.whiteTurn):
                 white = -1
-                
+            
+            value = gs.piece_value_total()
+            depth = 2 + (78 - value) // 59
             depth = 2
             move = ai.minimax(gs, 2 * depth, white)
             if not (move == None):                   

@@ -594,40 +594,47 @@ class GameState():
                     b_queen_alive = True
 
                 if piece == "wp":
-                    space += (7-row)
+                    space += (7-row) / 2
+                    if row == 1:
+                        space += 10
                     w_pawns[col] += 1
                     # centre
                     if row in range(2,6) and col in range(3,5):
                         score += 0.2
                     # pawn structure                      
                     if self.board[max(0, row-1)][max(0,col-1)] == "wp" or self.board[max(0,row-1)][min(7, col+1)] == "wp":
-                        score += 0.05
+                        score += 0.02
 
                     
 
                             
                 elif piece == "bp":
-                    space -= row
+                    space -= row /2
+                    if row == 6:
+                        space -= 10
                     b_pawns[col] += 1
                     # centre
                     if row in range(2,6) and col in range(3,5):
                         score -= 0.2
                     # pawn structure    
-                    if self.board[min(7, row+1)][max(0,col-1)] == "wp" or self.board[min(7,row+1)][min(7,col+1)] == "wp":
-                        score -= 0.05
+                    if self.board[min(7, row+1)][max(0,col-1)] == "bp" or self.board[min(7,row+1)][min(7,col+1)] == "bp":
+                        score -= 0.02
                 else:
+                    # Prevent early queen moves
+                    if piece[1] == "Q" and len(self.moveLog) < 12 and row in (2,3,4,5):
+                        if piece[0] == "w" :
+                            development -= 0.25
+                        elif piece[0] == "b":
+                            development += 0.25
+
                     #development
-                    if piece[1] != 'K' or piece[1] != 'R':
+                    if piece[1] != 'K' and piece[1] != 'R':
                         if piece[0] == "w" and row < 6:
                             development += 0.15
                         elif piece[0] == "b" and row > 1:
                             development -= 0.15
 
-                        # Prevent early queen moves
-                        if piece[0] == "Q" and len(self.moveLog) < 10:
-                            development -= 0.15
-                        elif piece[0] == "Q" and len(self.moveLog) < 10:
-                            development += 0.15
+
 
                     elif piece[1] == "R":
                         if piece[0] == "w" and col in range(3,7):
@@ -642,24 +649,25 @@ class GameState():
                             castling_side_list = [(0,1,2), (5,6,7)]
                             # king_pawns[a,b], where a is one square away from king, b is two squares away 
                             for castling_side in castling_side_list:
-                                king_pawns = [0,0]
                                 if col in castling_side:
-                                    for i in col:
-                                        if self.board[i][6] == "wp":
+                                    king_pawns = [0,0]
+
+                                    for i in castling_side:
+                                        if self.board[6][i] == "wp":
                                             king_pawns[0] += 1
-                                        if self.board[i][5] == "wp":
+                                        if self.board[5][i] == "wp":
                                             king_pawns[1] += 1
-                                
-                                # evaluate safety
-                                if king_pawns[0] < 2:
-                                    if king_pawns[0] == 0:
-                                        w_safety -= 0.5
-                                    elif king_pawns[1] == 2:
-                                        w_safety -= 0.05
-                                    elif king_pawns[1] == 1:
-                                        w_safety -= 0.1
-                                    elif king_pawns[1] == 0:
-                                        w_safety -= 0.3                     
+
+                                    # evaluate safety
+                                    if king_pawns[0] < 2:
+                                        if king_pawns[0] == 0:
+                                            w_safety -= 0.5
+                                        elif king_pawns[1] == 2:
+                                            w_safety -= 0.05
+                                        elif king_pawns[1] == 1:
+                                            w_safety -= 0.1
+                                        elif king_pawns[1] == 0:
+                                            w_safety -= 0.3                     
 
                         elif piece[0] == "b" and col in (0,1,2,6,7):
                             b_safety += 0.4
@@ -668,24 +676,25 @@ class GameState():
                             castling_side_list = [(0,1,2), (5,6,7)]
                             # king_pawns[a,b], where a is one square away from king, b is two squares away 
                             for castling_side in castling_side_list:
-                                king_pawns = [0,0]
                                 if col in castling_side:
-                                    for i in col:
-                                        if self.board[i][1] == "wp":
+                                    king_pawns = [0,0]
+                                
+                                    for i in castling_side:
+                                        if self.board[1][i] == "bp":
                                             king_pawns[0] += 1
-                                        if self.board[i][2] == "wp":
+                                        if self.board[2][i] == "bp":
                                             king_pawns[1] += 1
                                 
-                                # evaluate safety
-                                if king_pawns[0] < 2:
-                                    if king_pawns[0] == 0:
-                                        b_safety -= 0.5
-                                    elif king_pawns[1] == 2:
-                                        b_safety -= 0.05
-                                    elif king_pawns[1] == 1:
-                                        b_safety -= 0.1
-                                    elif king_pawns[1] == 0:
-                                        b_safety -= 0.3    
+                                    # evaluate safety
+                                    if king_pawns[0] < 2:
+                                        if king_pawns[0] == 0:
+                                            b_safety -= 0.5
+                                        elif king_pawns[1] == 2:
+                                            b_safety -= 0.05
+                                        elif king_pawns[1] == 1:
+                                            b_safety -= 0.1
+                                        elif king_pawns[1] == 0:
+                                            b_safety -= 0.3    
                     
                     # Knight on edge case
                     if piece[1] == 'N':
@@ -714,8 +723,17 @@ class GameState():
         if b_queen_alive:
             score += w_safety
         if w_queen_alive:
-            score += b_safety
+            score -= b_safety
         return score
+
+    # returns number of pieces and pawns, (pieces valued higher)
+    def piece_value_total(self):
+        total = 0
+        for row_list in self.board:  
+            for piece in row_list:
+                total += abs(self.pieceValue[piece])
+        return total
+                
 
 class Move():
     # row start from 1->8 (bottom left to top left)
