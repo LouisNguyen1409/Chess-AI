@@ -1,24 +1,32 @@
+# Chess AI written by Alex Zhao
+
 import math
 import ChessEngine
 import copy
 
+# Returns a sorted list of avaliable moves given:
+# gs : gamestate of chessboard
 def getMoves(gs):
     moves = gs.getValidMoves()
     underpromotions = []
     for move in moves:
         if move.isPawnPromotion:
             # Append underpromotion to list
-            for piece in ['R', 'B', 'N']:
+            for piece in ["R", "B", "N"]:
                 newMove = copy.deepcopy(move)
                 newMove.promotedPiece = piece
                 underpromotions.append(newMove)
-                
-            move.promotedPiece = 'Q'
+
+            move.promotedPiece = "Q"
 
     moves.extend(underpromotions)
     return move_ordering(moves, gs)
 
-def minimax( gs, depth, white ):
+# Returns best move given:
+# gs: game state
+# depth : maximum depth to search through
+# white : 1 if white turn, -1 if black
+def minimax(gs, depth, white):
     a = -math.inf
     b = math.inf
     if gs.checkMate or gs.staleMate or depth == 0:
@@ -27,41 +35,52 @@ def minimax( gs, depth, white ):
     bestMove = None
     for move in getMoves(gs):
         gs.makeMove(move, False)
-        new_a = -alphabeta(gs, depth-1, white, -b, -a , -1)
-        if (new_a > a):
+        new_a = -alphabeta(gs, depth - 1, white, -b, -a, -1)
+        if new_a > a:
             bestMove = move
             a = new_a
         gs.undoMove()
 
     return bestMove
 
-def alphabeta( gs, depth, white, a, b, side):
+# Returns score of given gamestate through alpha beta negamax:
+# gs: game state
+# depth : maximum depth to search through
+# white : 1 if white turn, -1 if black
+# a : alpha
+# b : beta
+# side: 1 if our turn, -1 if enemy turn
+
+def alphabeta(gs, depth, white, a, b, side):
     # Set checkmate/stalemate flags
     terminal, winner = isCheckmate(gs)
-    if terminal: 
+    if terminal:
         if winner == 0:
             return 0
         else:
             return white * side * winner * (10000 + 100 * depth)
-        
+
     if depth == 0:
         return white * side * gs.evaluate()
 
     for move in getMoves(gs):
         gs.makeMove(move, False)
-        a= max( a, -alphabeta(gs, depth-1, white, -b, -a , -side))
+        a = max(a, -alphabeta(gs, depth - 1, white, -b, -a, -side))
         gs.undoMove()
         if a >= b:
             return a
     return a
 
+# sorts the moves first according to captures, then checks, then rest, given :
+# moves : list of moves to sort
+# gs : gamestate
 def move_ordering(moves, gs):
     # Captures
     ordered = []
     for move in moves:
         if move.pieceCaptured != "--":
             ordered.append(move)
-    
+
     for move in ordered:
         moves.remove(move)
 
@@ -72,7 +91,7 @@ def move_ordering(moves, gs):
         if gs.inCheck:
             checks.append(move)
         gs.undoMove()
-    
+
     for move in checks:
         moves.remove(move)
         ordered.append(move)
@@ -83,6 +102,10 @@ def move_ordering(moves, gs):
 
     return ordered
 
+
+# Checks if is checkmate (it is moved out from chess engine so it doesnt have to
+# run the whole function it is taken from)
+# self : gamestate
 def isCheckmate(self):
     moves = []
     self.inCheck, self.pins, self.checks = self.checkForPinsAndChecks()
@@ -101,7 +124,7 @@ def isCheckmate(self):
             checkCol = check[1]
             pieceChecking = self.board[checkRow][checkCol]
             validSqs = []
-            if pieceChecking[1] == 'N':
+            if pieceChecking[1] == "N":
                 validSqs = [(checkRow, checkCol)]
             else:
                 for i in range(1, 8):
@@ -110,7 +133,7 @@ def isCheckmate(self):
                     if validSq[0] == checkRow and validSq[1] == checkCol:
                         break
             for i in range(len(moves) - 1, -1, -1):
-                if moves[i].pieceMoved[1] != 'K':
+                if moves[i].pieceMoved[1] != "K":
                     if not (moves[i].endRow, moves[i].endCol) in validSqs:
                         moves.remove(moves[i])
         else:
