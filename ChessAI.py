@@ -39,10 +39,11 @@ def alphabeta( gs, depth, white, a, b, side):
     # Set checkmate/stalemate flags
     terminal, winner = isCheckmate(gs)
     if terminal: 
-        if winner == 1:
-            return white * side * (10000 + 100 * depth)
-        else:
+        if winner == 0:
             return 0
+        else:
+            return white * side * winner * (10000 + 100 * depth)
+        
     if depth == 0:
         return white * side * gs.evaluate()
 
@@ -119,7 +120,10 @@ def isCheckmate(self):
 
     if len(moves) == 0:
         if self.inCheck:
-            return True, 1
+            if not self.whiteTurn:
+                return True, 1
+            else:
+                return True, -1
         else:
             return True, 0
 
