@@ -116,15 +116,16 @@ def main():
                 white = -1
             
             value = gs.piece_value_total()
-            depth = 2 + (78 - value) // 59
-            depth = 2
-            move = ai.minimax(gs, 2 * depth, white)
+            depth = 4 + (78 - value) // 59
+            depth = 4
+            move = ai.minimax(gs, depth, white)
             if not (move == None):                   
                 moveMade = True
                 animate = True
                 gs.makeMove(move, False)
 
         if moveMade:
+            print(gs.hashLog)
             if animate:
                 animateMove(gs.moveLog[-1], screen, gs.board, clock)
             validMoves = gs.getValidMoves()

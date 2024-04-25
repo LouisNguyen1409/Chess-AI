@@ -1,6 +1,6 @@
 # Storing the information about the current state of a chess game and determine the valid moves at the current state.
 import copy
-
+import ZobristHash as hash
 class GameState():
     def __init__(self):
         # The board is an 8x8 2D List, each element of the list has 2 characters.
@@ -39,8 +39,10 @@ class GameState():
             "wK": 0,
             "--": 0
         }
+        self.zobrist = hash.initTable()
         self.whiteTurn = True
         self.moveLog = []
+        self.hashLog = [hash.initHash(self.board, self.zobrist)]
         self.whiteKingLocation = (7, 4)
         self.blackKingLocation = (0, 4)
         self.inCheck = False
@@ -57,6 +59,7 @@ class GameState():
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move) # store history of move
+        self.hashLog.append(hash.hashMove(move, self.hashLog[-1], self.zobrist))
         self.whiteTurn = not self.whiteTurn
 
         # update king's location
@@ -102,6 +105,7 @@ class GameState():
     def undoMove(self):
         if len(self.moveLog) != 0:
             move = self.moveLog.pop()
+            self.hashLog.pop()
             self.board[move.startRow][move.startCol] = move.pieceMoved
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteTurn = not self.whiteTurn
@@ -573,6 +577,10 @@ class GameState():
                 moves.append(Move((row, col), (row, col - 2), self.board, isCastleMove=True))
     
     def evaluate(self):
+        # Check for repitition draws
+        if self.isRepitition():
+            return 0
+        
         score = 0
         b_pawns = [0,0,0,0,0,0,0,0]
         w_pawns = [0,0,0,0,0,0,0,0]  
@@ -733,6 +741,23 @@ class GameState():
             for piece in row_list:
                 total += abs(self.pieceValue[piece])
         return total
+    
+    def isRepitition(self):
+        latestState = self.hashLog[-1]
+        repitition = 1
+
+        for i in range(2, len(self.moveLog) + 1):
+            if self.moveLog[-i].pieceMoved == "wp" or self.moveLog[-i].pieceMoved == "bp":
+                return False
+            
+            if self.hashLog[-i] == latestState:
+                repitition += 1
+            
+            if repitition == 3:
+                return True
+            
+        return False
+        
                 
 
 class Move():
