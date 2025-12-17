@@ -1,4 +1,12 @@
 # Handle user input and display current GameState object
+import os
+import warnings
+
+# Suppress pygame welcome message and deprecation warnings
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="pygame")
+
 import math
 import pygame as p
 import ChessEngine
@@ -123,8 +131,9 @@ def main():
 
             value = gs.piece_value_total()
             depth = 4 + (78 - value) // 59
-            depth = 4
-            move = ai.minimax(gs, depth, white)
+            # depth = 5
+            # Use parallel minimax for better performance
+            move = ai.minimax_parallel(gs, depth, white)
             if not (move == None):
                 moveMade = True
                 animate = True

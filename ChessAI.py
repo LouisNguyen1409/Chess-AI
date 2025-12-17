@@ -3,6 +3,8 @@
 import math
 import ChessEngine
 import copy
+import multiprocessing
+from functools import partial
 
 # Returns a sorted list of avaliable moves given:
 # gs : gamestate of chessboard
@@ -21,6 +23,56 @@ def getMoves(gs):
 
     moves.extend(underpromotions)
     return move_ordering(moves, gs)
+
+# Worker function for parallel move evaluation
+def evaluate_move(move, gs_copy, depth, white, a, b):
+    gs_copy.makeMove(move, False)
+    score = -alphabeta(gs_copy, depth - 1, white, -b, -a, -1)
+    gs_copy.undoMove()
+    return (move, score)
+
+# Parallel version using multiprocessing
+def minimax_parallel(gs, depth, white, num_processes=None):
+    if num_processes is None:
+        num_processes = multiprocessing.cpu_count()
+
+    a = -math.inf
+    b = math.inf
+    if gs.checkMate or gs.staleMate or depth == 0:
+        return None
+
+    moves = getMoves(gs)
+    if len(moves) == 0:
+        return None
+
+    # Create copies of game state for each process
+    gs_copies = [copy.deepcopy(gs) for _ in range(len(moves))]
+
+    # Use multiprocessing pool to evaluate moves in parallel
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        # Create partial function with fixed parameters
+        eval_func = partial(evaluate_move, gs_copy=gs, depth=depth, white=white, a=a, b=b)
+
+        # Evaluate all moves in parallel
+        results = []
+        for i, move in enumerate(moves):
+            gs_copy = copy.deepcopy(gs)
+            results.append((move, gs_copy))
+
+        # Map the evaluation function
+        evaluated = pool.starmap(evaluate_move,
+                                [(move, gs_copy, depth, white, a, b)
+                                 for move, gs_copy in results])
+
+    # Find best move from results
+    bestMove = None
+    bestScore = -math.inf
+    for move, score in evaluated:
+        if score > bestScore:
+            bestScore = score
+            bestMove = move
+
+    return bestMove
 
 # Returns best move given:
 # gs: game state
